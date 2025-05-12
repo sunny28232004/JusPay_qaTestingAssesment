@@ -1,0 +1,92 @@
+package com.java_testing.Selinium_testing;
+
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.support.ui.WebDriverWait;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import java.time.Duration;
+
+public class App {
+    public static void main(String[] args) throws InterruptedException {
+
+        // Set the path to the ChromeDriver executable
+        System.setProperty("webdriver.chrome.driver", System.getProperty("user.dir") + "/src/main/java/drivers/chromedriver.exe");
+
+        // Initialize WebDriver and WebDriverWait
+        WebDriver driver = new ChromeDriver();
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+
+        // Maximize the browser window
+        driver.manage().window().maximize();
+
+        // Navigate to the Stripe test payment page
+        driver.get("https://buy.stripe.com/test_8x228qada823454cML0Ny00");
+        Thread.sleep(3000); // Wait for the page to load
+
+        // Step 1: Enter email
+        WebElement emailField = driver.findElement(By.name("email"));
+        emailField.sendKeys("testuser@example.com");
+
+        // Step 2: Enter card number
+        WebElement cardNumberField = driver.findElement(By.name("cardNumber"));
+        cardNumberField.sendKeys("4000002760003184");
+
+        // Step 3: Enter expiry date
+        WebElement expDateField = driver.findElement(By.name("cardExpiry"));
+        expDateField.sendKeys("12 / 34");
+
+        // Step 4: Enter CVC
+        WebElement cvcField = driver.findElement(By.name("cardCvc"));
+        cvcField.sendKeys("123");
+
+        // Step 5: Enter billing name
+        WebElement nameField = driver.findElement(By.name("billingName"));
+        nameField.sendKeys("Test User");
+
+        // Step 6: Click the "Pay" button
+        try {
+            WebElement payBtn = wait.until(ExpectedConditions.elementToBeClickable(
+                    By.cssSelector("button[data-testid='hosted-payment-submit-button']")));
+            try {
+                payBtn.click();
+                System.out.println("Clicked Pay button using normal click.");
+            } catch (Exception e) {
+                System.out.println("Standard click failed: " + e.getMessage());
+                ((JavascriptExecutor) driver).executeScript("arguments[0].click();", payBtn);
+                System.out.println("Clicked Pay button using JavaScript click.");
+            }
+        } catch (Exception e) {
+            System.out.println("Pay button not found or not clickable: " + e.getMessage());
+        }
+
+        // Step 7: Handle 3D Secure authentication
+        try {
+            // Wait for the iframe to load
+            Thread.sleep(3000);
+
+            // Switch to the 3D Secure iframe
+            driver.switchTo().frame(driver.findElement(By.cssSelector("iframe[name^='__privateStripeFrame']")));
+
+            // Wait and click the "Complete" button
+            WebElement completeBtn = wait.until(ExpectedConditions.elementToBeClickable(
+                    By.id("test-source-authorize-3ds")));
+            completeBtn.click();
+            System.out.println("Clicked Complete button in 3D Secure popup.");
+
+            // Switch back to the main content
+            driver.switchTo().defaultContent();
+        } catch (Exception e) {
+            System.out.println("Complete button not found or 3D Secure not triggered: " + e.getMessage());
+        }
+
+        // Final wait to observe result
+        Thread.sleep(5000);
+        System.out.println("Stripe payment test completed.");
+
+        // Close browser
+        driver.quit();
+    }
+}

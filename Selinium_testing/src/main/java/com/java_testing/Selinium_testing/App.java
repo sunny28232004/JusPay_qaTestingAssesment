@@ -1,0 +1,63 @@
+package com.java_testing.Selinium_testing;
+
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.support.ui.WebDriverWait;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import java.time.Duration;
+
+public class App {
+    public static void main(String[] args) throws InterruptedException {
+
+        System.setProperty("webdriver.chrome.driver", System.getProperty("user.dir") + "/src/main/java/drivers/chromedriver.exe");
+
+        WebDriver driver = new ChromeDriver();
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(20));
+        driver.manage().window().maximize();
+
+        driver.get("https://buy.stripe.com/test_8x228qada823454cML0Ny00");
+        Thread.sleep(3000);
+
+        driver.findElement(By.name("email")).sendKeys("testuser@example.com");
+        driver.findElement(By.name("cardNumber")).sendKeys("4000002760003184");
+        driver.findElement(By.name("cardExpiry")).sendKeys("12 / 34");
+        driver.findElement(By.name("cardCvc")).sendKeys("123");
+        driver.findElement(By.name("billingName")).sendKeys("Test User");
+
+        WebElement payBtn = wait.until(ExpectedConditions.elementToBeClickable(
+                By.cssSelector("button[data-testid='hosted-payment-submit-button']")));
+        try {
+            payBtn.click();
+        } catch (Exception e) {
+            ((JavascriptExecutor) driver).executeScript("arguments[0].click();", payBtn);
+        }
+
+        try {
+            Thread.sleep(4000);
+            WebElement outerIframe = wait.until(ExpectedConditions.presenceOfElementLocated(
+                    By.cssSelector("iframe[name^='__privateStripeFrame']")));
+            driver.switchTo().frame(outerIframe);
+
+            WebElement innerIframe = wait.until(ExpectedConditions.presenceOfElementLocated(
+                    By.cssSelector("iframe")));
+            driver.switchTo().frame(innerIframe);
+
+            WebElement completeBtn = wait.until(ExpectedConditions.elementToBeClickable(
+                    By.id("test-source-authorize-3ds")));
+            completeBtn.click();
+            System.out.println("Clicked Complete button in 3D Secure popup.");
+
+            driver.switchTo().defaultContent();
+        } catch (Exception e) {
+            System.out.println("3D Secure step failed: " + e.getMessage());
+        }
+
+        Thread.sleep(4000);
+        System.out.println("Stripe payment test completed.");
+        Thread.sleep(3000);
+        driver.quit();
+    }
+}

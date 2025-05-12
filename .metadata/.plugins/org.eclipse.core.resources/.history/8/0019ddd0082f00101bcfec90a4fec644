@@ -1,0 +1,79 @@
+package com.java_testing.Selinium_testing;
+
+//import org.openqa.selenium.WebDriver;
+//import org.openqa.selenium.chrome.ChromeDriver;
+/**
+ * Hello world!
+ *
+ */
+//public class App 
+//{
+//    public static void main( String[] args )
+//    {
+//        System.setProperty( "webdriver.chrome.driver", System.getProperty("user.dir")+"/src/main/java/drivers/chromedriver.exe");
+//        WebDriver driver = new ChromeDriver();
+//        
+//    }
+//}
+
+
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+
+public class App {
+    public static void main(String[] args) throws InterruptedException {
+        // Set path to your ChromeDriver
+    	System.setProperty( "webdriver.chrome.driver", System.getProperty("user.dir")+"/src/main/java/drivers/chromedriver.exe");
+
+
+        WebDriver driver = new ChromeDriver();
+        driver.manage().window().maximize();
+
+        // Step 1: Open Stripe Checkout link
+        driver.get("https://buy.stripe.com/test_8x228qada823454cML0Ny00"); // Replace with your test link
+        Thread.sleep(3000);
+
+        // Step 2: Enter email
+        WebElement emailField = driver.findElement(By.name("email"));
+        emailField.sendKeys("testuser@example.com");
+
+//        // Step 3: Enter card number (Stripe test card)
+//        driver.findElement(By.name("cardnumber")).sendKeys("4000002760003184"); // 3D Secure test card
+//        driver.findElement(By.name("exp-date")).sendKeys("12 / 34");
+//        driver.findElement(By.name("cvc")).sendKeys("123");
+//        driver.findElement(By.name("billingName")).sendKeys("Test User");
+        
+     // Step 3: Switch to the iframe that contains the card inputs
+        WebElement cardFrame = driver.findElement(By.cssSelector("iframe[name^='__privateStripeFrame']"));
+        driver.switchTo().frame(cardFrame);
+
+        // Now enter card details
+        driver.findElement(By.name("cardnumber")).sendKeys("4000002760003184");
+        driver.findElement(By.name("exp-date")).sendKeys("12 / 34");
+        driver.findElement(By.name("cvc")).sendKeys("123");
+
+        // Exit iframe back to main content
+        driver.switchTo().defaultContent();
+
+        // Optional: scroll to pay button
+        WebElement payBtn = driver.findElement(By.cssSelector("button[data-testid='hosted-checkout-submit-button']"));
+        payBtn.click();
+        Thread.sleep(8000); // Wait for redirect to 3D Secure page
+
+        // Step 4: Handle 3D Secure authentication (OTP page)
+        driver.switchTo().frame(driver.findElement(By.tagName("iframe")));
+        Thread.sleep(3000);
+
+        WebElement completeAuth = driver.findElement(By.xpath("//button[contains(text(),'Complete authentication')]"));
+        completeAuth.click();
+        Thread.sleep(5000);
+
+        System.out.println("Stripe payment test successful.");
+
+        driver.quit();
+    }
+}
+
+
